@@ -1,0 +1,337 @@
+/* -- body styles --------------------------------------------------- */
+
+body {
+  font-family: 'Garamond', 'Georgia', serif;
+  font-size: 20px;
+  background-color: wheat;
+  color: #3e4349;
+  padding: 0;
+  /* 
+  margin: 50px;
+  */
+}
+
+div.body {
+  min-width: initial;
+  max-width: initial;
+  padding: 0 30px;
+  margin: 200;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  border-bottom-style: solid;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: normal;
+  padding: 0;
+  color: black;
+}
+
+div.body h1 {
+  font-size: 240%;
+}
+
+div.body h2 {
+  font-size: 180%;
+}
+
+div.body h3 {
+  font-size: 150%;
+}
+
+div.body h4 {
+  font-size: 130%;
+}
+
+span.breadcrumbs {
+  color: #33d;
+  margin: 0 0.2em;
+  padding: 0 0.2em;
+  border: none;
+}
+
+div.body p,
+div.body dd,
+div.body li {
+  line-height: 1.4;
+}
+
+hr {
+  border: 1px solid #999;
+}
+
+blockquote {
+  margin: 0 0 0 30px;
+  padding: 0;
+}
+
+ul, ol {
+  margin: 10px 0 10px 30px;
+  padding: 0;
+}
+
+select {
+  font-family: 'Garamond', 'Georgia', serif;
+  font-size: 18px;
+  padding: 50 !important;
+}
+
+span.chessmove {
+  line-height: 150%;
+  margin-left: 10px;
+}
+
+span.chessmovenumber {
+  line-height: 150%;
+  margin-left: 5px;
+}
+
+span.list_header {
+  display: block;
+  text-align: center;
+  font-size: 1.5rem;
+  line-height: 120%;
+  font-weight: bold;
+}
+
+/* -- tables -------------------------------------------------------- */
+
+table.gamenotationtable {
+  display: block;
+  table-layout: fixed;
+  height: 350px;
+  width: 260px;
+  margin: 20px;
+  border-collapse: collapse;
+  overflow-y: scroll;
+}
+
+table.gamenotationtable td {
+  border: 1px  solid #3e4349;
+  border-collapse: collapse;
+}
+table.gamenotationtable tbody td:nth-child(1) {
+  /* This makes the first cell in every
+  line (for the move numbers) only 30px wide. */
+  width: 30px;
+}
+
+table.gamenotationtable .highlight {
+  background: #ffff99;
+  }
+
+table.gameheadertable {
+  text-align: center;
+  table-layout: fixed;
+  width: 230px;
+  margin: 20px;
+  border-collapse: collapse;
+}
+
+table.nicetable {
+  table-layout: fixed;
+  margin-left: 40px;
+  width: 90%;
+  border-collapse: collapse;
+  border: none;
+}
+
+table.nicetable thead {
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+table.nicetable td {
+  padding: 0.25em 0.7em;
+  border: 1px  solid #3e4349;
+  border-collapse: collapse;
+}
+
+/* --- buttons -----*/
+
+button.nicebutton {
+  font-family: 'Garamond', 'Georgia', serif;
+  color: #522;
+  border: 0;
+  line-height: 2.5;
+  padding: 0 20px;
+  font-size: 1.5rem;
+  text-align: center;
+  border-radius: 10px;
+  background-color: rgba(255, 230, 190, 1);
+  box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .6),
+              inset -2px -2px 3px rgba(0, 0, 0, .6);
+}
+
+button.nicebutton:hover {
+  background-color: rgba(265, 240, 200, 1);
+}
+
+button.nicebutton:active {
+  box-shadow: inset -2px -2px 3px rgba(255, 255, 255, .6),
+              inset 2px 2px 3px rgba(0, 0, 0, .6);
+}
+
+
+/*--Input widgets------------------------------------------------*/
+
+textarea {
+  font-family: 'Garamond', 'Georgia', serif;
+  font-size: 18px;
+  background-color:  rgba(265, 240, 200, 1);
+  color: #000;
+  text-align: left;
+}
+
+.basic_select {
+  font-family: 'Garamond', 'Georgia', serif; 
+  font-size: 24px;
+	line-height: 1.3;
+  padding: 5px;
+  width: 250px;
+}
+
+
+/* -- the chessboard --------------------------------------------- */
+
+/*! chessboard.js v1.0.0 | (c) 2019 Chris Oakman | MIT License chessboardjs.com/license */
+
+.clearfix-7da63 {
+  clear: both;
+}
+
+.board-b72b1 {
+  border: 2px solid #404040;
+  box-sizing: content-box;
+}
+
+.square-55d63 {
+  float: left;
+  position: relative;
+
+  /* disable any native browser highlighting */
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+
+.white-1e1d7 {
+  background-color: #f0d9b5;
+  color: #b58863;
+}
+
+.black-3c85d {
+  background-color: #b88878;
+  color: #f0d9b5;
+}
+
+.highlight1-32417, .highlight2-9c5d2 {
+  box-shadow: inset 0 0 3px 3px yellow;
+}
+
+.notation-322f9 {
+  cursor: default;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  position: absolute;
+}
+
+.alpha-d2270 {
+  bottom: 1px;
+  right: 3px;
+}
+
+.numeric-fc462 {
+  top: 2px;
+  left: 2px;
+}
+
+/* --- custom layout classes -----------------*/
+
+    /*  ---  big sections of the page --------*/
+    /*  --- These classes created individually so they will be
+    available later, but right now they don't need any 
+    special features.   ---------------------- */
+
+.mainflex {
+  /* This is the overall container for the page.
+  It contains three panels: the chessboard, the move list,
+  and the opening thumbnails + game list. */
+  display: flex;
+}
+
+.main_chessboard {
+  /* The three main panels are members of this class.  */
+  flex: 1;
+}
+
+.movetable_container {
+  /* Class for the table containing the list of moves,
+  in the middle panel. */
+  width: 400;
+  flex: 1;
+}
+
+.arrow_flex {
+  /* Class for the little panel containing the 
+  navigation arrows for the list of moves,
+  in the middle panel. */
+  display: flex;
+  justify-content: space-evenly;
+  width: 220px;
+  margin: 30px;
+}
+
+.menuflex {
+  /* Class for a horizontal menu of widgets.
+  Right now, this is used for the buttons and 
+  caption above the opening thumbnails. */
+  min-width: initial;
+  max-width: initial;
+  padding: 0px 30px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.opening_thumbnail_container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  row-gap: 20px;
+}
+
+/*
+.bigflex {
+  min-width: initial;
+  max-width: initial;
+  padding: 0 30px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.bigflex>* {
+  flex: 1 1 500px;
+}
+
+.menuflex>* {
+  flex: 1 1 290px;
+}
+
+.flexitem {
+flex-grow: 1;
+}
+
+
+.gridder {
+  display: grid;
+  grid-template-columns: 300px 400px 200px;
+}
+*/

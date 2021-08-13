@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Leon's Chess Research and Training System</title>
+  <base href="../" />
+
+<link rel="stylesheet" href="{{ url_for('static',filename='chess_style.css') }}">
+</head>
+<body>
+
+<h1>Leon's Chess Research and Training System</h1>
+
+<!--- Begin top row ------------------------------------------------------>
+
+<!--- Begin chessboard (first panel in top row)--------------------------->
+<div class="mainflex">
+  <div class="main_chessboard">
+    <div id="bigboard" style="width: 500px"></div>
+  </div>
+<!--- End chessboard -------------------------------------------------------->
+
+<!--- Begin middle panel (top row) ---------------------------------------->
+  <div class="main_chessboard" >
+<!--- Begin move list ------------------------------------------------------->
+<table id="gameheader_table" class="gameheadertable">
+  <tr>
+    <td id='gameheader_cell'>
+      <span id='movelist_header' class="list_header">
+
+      </span>
+    </td>
+  </tr>
+</table>  
+  <table id="gamemoves_table" class="gamenotationtable"> 
+    
+    <tbody id="game_notation_tbody">
+    </tbody>
+  </table>
+  <table id="gamefooter_table" class="gameheadertable">
+    <tr>
+      <td id='gamefooter_cell'>
+        <span id='movelist_footer' class="list_header">
+          *
+        </span>
+      </td>
+    </tr>
+  </table>
+<!--- End move list ------------------------------------------------------->
+
+<!--- Begin arrow navs ---------------------------------------------------->
+    <p>
+      <div class="arrow_flex">
+        <div>
+          <img onclick="game_handler.go_first()"
+            src="{{ url_for('static',filename='first_arrow.png') }}"
+            alt="bump back image" float="left">
+        </div>
+        <div>
+          <img onclick="game_handler.bump_move(-1)"
+            src="{{ url_for('static',filename='pre_arrow.png') }}"
+            alt="previous image">
+        </div>
+        <div>
+          <img  onclick="game_handler.bump_move(1)"
+            src="{{ url_for('static',filename='next_arrow.png') }}"
+            alt="next image">
+        </div>
+        <div>
+          <img onclick="game_handler.go_last()"
+            src="{{ url_for('static',filename='last_arrow.png') }}"
+            alt="previous image">
+        </div>
+      </div>
+    </p>
+  </div>  
+<!--- End arrow navs ------------------------------------------------------->
+<!--- End central (second) panel  (top row) -------------------------------->
+
+<!--- Begin last panel  (top row) -------------------------------->
+  <div class="main_chessboard">
+    <div class="menuflex"id="breadcrumb_space">
+      <span id="opening_-1" class="breadcrumbs">
+        Root Openings 
+      </span>
+    </div>
+    <div>
+      <p>
+        &nbsp;
+      </p>
+    </div>
+    <div>
+      <span id="opening_display_caption" class="list_header">
+        Root Openings
+      </span>
+    </div>
+    <div id="opening_display_space" class="opening_thumbnail_container"> 
+      
+    </div>
+    <p>
+      &nbsp;
+    </p>
+    <span id="related_game_list_caption" class="list_header"
+    data-stem-position="1">
+      Games
+    </span>
+    <table class="nicetable">
+      <tbody id="related_game_display_space">
+        <tr>
+          <td>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>  
+</div>  
+<!--- End top row ---------------------------------------------------->
+
+<p>
+  Source code up at <a href="https://github.com/Akpalu/chessdelite" target="_blank">
+  https://github.com/Akpalu/chessdelite</a>
+</p>
+
+{% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous">
+</script>
+
+<script 
+  src="{{ url_for('static',filename='chessboardjs/js/chessboard-1.0.0-flask.js') }}">
+</script>
+
+<script 
+  src="{{ url_for('static',filename='chessdelite_handlers/game_handler.js') }}">
+</script>
+
+<script 
+  src="{{ url_for('static',filename='chessdelite_handlers/openings_handler.js') }}">
+</script>
+
+<script>  
+
+
+/* ------------- Initialization routines --------------- */ 
+
+// Declare main chessboard  
+var config = {
+  draggable: true,
+  dropOffBoard: 'snapback', // this is the default
+  position: 'start'
+};
+var Main_Board = Chessboard('bigboard', config);
+
+// These are the objects that handle the functionality.
+var game_handler = new GameHandler;
+var openings_handler = new OpeningsHandler;
+var breadcrumbs_handler = new BreadcrumbsHandler;
+
+// set of board icons for opening data 
+var Board_List = [];
+
+/* ------------- End initialization routines --------------- */ 
+
+
+function load() {
+  try {
+    //alert("Hello!");
+    game_handler.load_game();
+    openings_handler.load_openings(-1); // This also loads the opening breadcrumbs
+  } 
+    catch (error) {
+      alert(error);
+    }
+}
+
+window.onload = load();
+
+/* Test routines */
+
+function test() {
+  try {
+    let test_var = {{ url_for('retrieve_opening_game_info', opening_node_key='___dummy___')|tojson }};
+    alert(test_var);
+  }
+  catch (error) {
+      alert(error);
+  }
+}
+
+</script>
+
+{% endblock %}
+
+
+</body>
+</html>
