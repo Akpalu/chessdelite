@@ -11,7 +11,7 @@ The name derives from the current database format – sqlite – and because che
 # What’s here now and how it works
 This (very early) iteration is simply a basic interface, with some data acquisition and display capabilities. It displays the list of moves for a game, displays the game position on a board, and allows the user to navigate the game by clicking on moves or on arrow buttons.
 
-Beside the move list, the program displays a palette of thumbnail chessboards displaying chess openings. When the user chooses an opening, the palette changes recursively to display the variations of that choice. The program displays a list of games featuring that variation below the thumbnails, and choosing a game from that list loads it onto the chessboard and move list. You can see it in action here:
+Beside the move list, the program displays a palette of thumbnail chessboards displaying chess openings. When the user chooses an opening, the palette changes recursively to display the variations of that choice. You can backtrack in the openings tree via the breadcrumbs above the palette. Once you've chosen an opening tabiya thumbnail, he program displays a list of games featuring that variation below the thumbnails, and choosing a game from that list loads it onto the chessboard and move list. You can see it all (the board with game display, and the tree of opening thumbnails) in action here:
 [https://chessdelite.mushroomthejournal.com/](https://chessdelite.mushroomthejournal.com/)
 
 There is also a jupyter notebook (Chess Delite Support.ipynb, in the root directory) that allows the smooth import of PGN games, and also gives annotated examples of how to build an opening tree (for population of the openings palette). 
