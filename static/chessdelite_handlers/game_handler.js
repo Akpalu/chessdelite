@@ -289,9 +289,17 @@ class GameHandler {
         let newCell = hotRow.insertCell(0);
         newCell.id =  move_step + "number";
         newCell.innerHTML = '<span class="chessmovenumber"> ' 
-            + move_step + '. </span>'
-        // Insert white move (if any)
+            + move_step + '. </span>';
+        
+				console.log(JSON.stringify(this.#move_list));
+				
+				// Insert white move (if any)
         let white_move_index = move_step + "W";
+				
+				// alert(white_move_index);
+				// alert(this.#MOVE_LIST_DISPLAY_NOTATION);
+				// console.log(this.#move_list[white_move_index]);
+				
         /* Because of the pre-move bump forward (see above), there
         will always be an *index* for a white move for the first
         move number; what we have to test for here is whether there's

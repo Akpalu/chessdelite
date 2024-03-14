@@ -86,6 +86,22 @@ class MoveRef:
         except (ValueError, TypeError):
             return None
 
+    def increment(self):
+        if self.move_color == "B":
+            self.move_color = "W"
+            self.move_number = self.move_number + 1
+        else:
+            self.move_color = "B"
+        return str(self.move_number) + self.move_color
+
+    def decrement(self):
+        if self.move_color == "B":
+            self.move_color = "W"
+        else:
+            self.move_color = "B"
+            self.move_number = self.move_number - 1
+        return str(self.move_number) + self.move_color
+
 
 '''  Chess utilities   '''
 
@@ -174,9 +190,11 @@ def get_games_matching_this_position(position_key: int) -> dict:
     #  1 is the initial position
     if position_key <= 1:
         return {}
-    chess_db.execute("""SELECT MoveGame FROM Moves INNER JOIN Games 
-    ON Moves.MoveGame = Games.GameKey
-    WHERE PositionTo = """ + str(position_key) + " AND GameSourceType = 1")
+    new_sql = """SELECT MoveGame FROM GameMoves INNER JOIN PureMoves 
+    ON GameMoves.GameMovePureMove = PureMoves.PureMoveKey 
+    INNER JOIN Games ON GameMoves.MoveGame = Games.GameKey
+    WHERE PureMoves.PositionTo = """ + str(position_key) + " AND GameSourceType = 1"
+    chess_db.execute(new_sql)
     game_info_dict = {move_row[0]: get_game_info(move_row[0], cOneLineGameInfo)[cGameHeader] for move_row in chess_db.fetchall()}
     return game_info_dict
 
@@ -187,35 +205,39 @@ def get_game_moves(game_key: int, stem_position: int) -> tuple:
     game_dict = {}
     utilityboard.reset()
     chess_db = get_db().cursor()
-    chess_db.execute("""SELECT MoveKey, MoveNumber, MoveWhoseMove, SquareFrom, SquareTo, LineParent, SublineIndex, 
-            PositionRank8, PositionRank7, PositionRank6, PositionRank5, PositionRank4, PositionRank3, 
-            PositionRank2, PositionRank1, PositionWhoseMove, PositionCastlingPrivileges, PositionTo, MovePromotionPiece
-            FROM Moves INNER JOIN Positions ON Moves.PositionFrom = Positions.PositionKey
-            WHERE MoveGame = """ + str(game_key))
+    new_sql = """SELECT GameMoveKey, MoveNumber, WhoseMoveWasThis, SquareFrom, SquareTo, LineParent, 
+        SublineIndex, PositionRank8, PositionRank7, PositionRank6, PositionRank5, PositionRank4, 
+        PositionRank3,  PositionRank2, PositionRank1, PositionWhoseMove, PositionCastlingPrivileges, 
+        PositionTo, MovePromotionPiece, PureMoveKey, PositionTo
+          FROM (GameMoves INNER JOIN PureMoves ON GameMoves.GameMovePureMove = PureMoves.PureMoveKey)
+          INNER JOIN Positions ON PureMoves.PositionFrom = Positions.PositionKey
+          WHERE MoveGame = """ + str(game_key)
+    chess_db.execute(new_sql)
     resultset = chess_db.fetchall()
     last_move_ref = MoveRef()
     current_move_ref = MoveRef()
-    # Get that first position, which has no (pre-)move, just the position.
+    # Add that pre-move position, which has no move (or Move ID),  
+    # just the position from before the first move.
     first_rec = resultset[0]
-    move_key = 0  
-    # Go back a move; flip the colors, and decrement move number if color was White
-    if first_rec[2] == 'True':
-        whose_move = "B"
-        move_number = first_rec[1] - 1
-    else:
-        whose_move = "W"
-        move_number = first_rec[1]    
+    move_number = first_rec[1]
+    whose_move = "W" if (first_rec[2] == "w") else "B"
     first_move_ref = MoveRef(move_number, whose_move)
-    move_uci = ''
-    hot_move = ''
+    first_move_ref.decrement()
+    empty_legal_move_list = []
+    empty_move_uci = ''
+    position_key = 1
     complete_FEN = make_complete_fen(first_rec[7:15], first_rec[15], first_rec[16])
-    game_dict['0.0'] = {first_move_ref.get_index(): [hot_move, complete_FEN]}
+    game_dict['0.0'] = {first_move_ref.get_index(): [empty_move_uci, 
+        complete_FEN, position_key], "line_ID": '0.0'}
     # Get the rest of the rows
     for move_row in resultset:
-        # Info for the actual moves
-        move_key = move_row[0]
+        # Now that the pre-move is done, info for the actual moves
+
+        # game_move_key will be used to bring over the Move ID of a move
+        # from its table, for use in constructing secondary lines.
+        game_move_key = move_row[0]
         move_number = move_row[1]
-        whose_move = "W"  if (move_row[2] == 'True') else "B"
+        whose_move = "W"  if (move_row[2] == "w") else "B"
         move_dict_key = str(move_number) + whose_move
 
         # Check if this is the stem position
@@ -303,11 +325,10 @@ def retrieve_opening_game_info(opening_node_key):
     "stem_position_key": stem_position_key}
     return jsonify(master_dict)
 
-@app.route('/retrieve_game')
+@app.route('/retrieve_game/')
 def retrieve_game():
     game_key = request.args.get('game_key', cDEF_GAME_KEY, type=int)
     stem_position_key = request.args.get('stem_position_key', cDEF_POSITION_KEY, type=int)
-    # game_contents, game_meta_info = get_complete_game_info(game_key, stem_position_key)
     game_contents, game_meta_info = get_complete_game_info(game_key, stem_position_key)
     master_dict = {"game_contents": game_contents, 
         "game_meta_info": game_meta_info}
