@@ -10,6 +10,7 @@ DATABASE = 'chessdelite.db'
 # Game types
 cNormalGame = 1
 cOpeningTree = 2
+cDiagram = 3
 
 # Game meta-info indices
 cGameHeader = 0
@@ -18,9 +19,15 @@ cOneLineGameInfo = True
 
 # Default game (to load on startup)
 cROOT_OPENINGS_KEY = -1
-cDEF_GAME_KEY = 40
-cDEF_POSITION_KEY = 10
+# Next two defaults are the Fischer-Geller game.
+#cDEF_GAME_KEY = 40
+#cDEF_POSITION_KEY = 10
+# Load Chandra-Novikov position instead
+cDEF_GAME_KEY = 45
+cDEF_POSITION_KEY =  3159  
+                      
 cDEF_MOVE_REF_INDEX = "0B"
+cDEF_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 '''  Database connection and teardown   '''
 
@@ -46,7 +53,7 @@ class MoveRef:
     _C_default_line = "0.0"
 
     def __unpack_move_ref(self, hot_index) :
-        hot_move_number = hot_index[0:-1]
+        hot_move_number = int(hot_index[0:-1])
         hot_move_color = hot_index[-1]
         return (hot_move_number, hot_move_color)
 
@@ -124,7 +131,18 @@ def make_complete_fen(FEN_rows: list, whose_move: str, castling_privileges: str)
     return complete_FEN
          
 def create_line_index(line_parent:int, subline_index: int)->str:
+    '''Implements a standard way of denoting a unique line in the chess game.'''             
     return str(line_parent) + "." + str(subline_index) 
+    
+def get_chess_fields(original_fen, uci_move):
+    utilityboard.set_fen(original_fen)
+    hot_move = chess.Move.from_uci(uci_move)
+    # short_algebraic_notation = utilityboard.san(hot_move)
+    long_algebraic_notation = utilityboard.lan(hot_move)
+    utilityboard.push(hot_move)
+    new_fen = utilityboard.fen()
+    legal_move_list = [utilityboard.uci(hot_move) for hot_move in utilityboard.legal_moves]
+    return long_algebraic_notation, new_fen, legal_move_list
     
 def get_game_info(game_key: int, one_liner = False) -> tuple:
     '''Assembles a header text for the game, and if the game is a
@@ -147,7 +165,7 @@ def get_game_info(game_key: int, one_liner = False) -> tuple:
     chess_db = get_db().cursor()
     chess_db.execute("SELECT GameSourceType FROM 'Games' WHERE GameKey = " + str(game_key))
     game_type = chess_db.fetchone()[0]
-    if game_type == cNormalGame:
+    if game_type == cNormalGame or game_type == cDiagram:
         chess_db.execute("SELECT StubHeaderField, StubHeaderValue FROM 'Gamestubs' WHERE StubGameKey = " + str(game_key))
         header_dict = {stub[0]: stub[1] for stub in chess_db.fetchall()}
         white_name = get_player_name(header_dict["White"])
@@ -156,7 +174,7 @@ def get_game_info(game_key: int, one_liner = False) -> tuple:
         game_date = header_dict["Date"][:4]
         game_site = header_dict["Site"] + ", " if header_dict["Site"] else ''
         game_event = ''
-        if (header_dict["Round"]) and ("?" not in header_dict["Round"]):
+        if ("Round" in header_dict) and ("?" not in header_dict["Round"]):
             game_event = "Round " + header_dict["Round"]
         if  (header_dict["Event"]) and ("?" not in header_dict["Event"]) and \
         (header_dict["Event"] != header_dict["Site"]):
@@ -203,7 +221,7 @@ def get_game_moves(game_key: int, stem_position: int) -> tuple:
         game_key = cDEF_GAME_KEY
         stem_position = cDEF_POSITION_KEY
     game_dict = {}
-    utilityboard.reset()
+    breakout_dict = {}
     chess_db = get_db().cursor()
     new_sql = """SELECT GameMoveKey, MoveNumber, WhoseMoveWasThis, SquareFrom, SquareTo, LineParent, 
         SublineIndex, PositionRank8, PositionRank7, PositionRank6, PositionRank5, PositionRank4, 
@@ -217,7 +235,8 @@ def get_game_moves(game_key: int, stem_position: int) -> tuple:
     last_move_ref = MoveRef()
     current_move_ref = MoveRef()
     # Add that pre-move position, which has no move (or Move ID),  
-    # just the position from before the first move.
+    # just the position from before the first move. (The retrieved
+    # recordset has only the position_from for each move.)                            
     first_rec = resultset[0]
     move_number = first_rec[1]
     whose_move = "W" if (first_rec[2] == "w") else "B"
@@ -237,48 +256,57 @@ def get_game_moves(game_key: int, stem_position: int) -> tuple:
         # from its table, for use in constructing secondary lines.
         game_move_key = move_row[0]
         move_number = move_row[1]
-        whose_move = "W"  if (move_row[2] == "w") else "B"
-        move_dict_key = str(move_number) + whose_move
+        whose_move = "W" if (move_row[2] == "w") else "B"
+        game_dict_move_key  = str(move_number) + whose_move
 
         # Check if this is the stem position
         if (move_row[17] == stem_position):
-            current_move_ref.set_index(move_dict_key)
+            current_move_ref.set_index(game_dict_move_key)
 
         # Get the actual move and FEN info
+        # Concatenate the From and To squares:
         move_uci = move_row[3] + move_row[4]
+        # Add the promotion piece if there is one:
         if move_row[18]:
             move_uci = move_uci + move_row[18]
-        hot_move = chess.Move.from_uci(move_uci)
         complete_FEN = make_complete_fen(move_row[7:15], move_row[15], move_row[16])
-        utilityboard.set_fen(complete_FEN)
-        short_algebraic_notation = utilityboard.san(hot_move)
-        long_algebraic_notation = utilityboard.lan(hot_move)
-        utilityboard.push(hot_move)
-        move_fen = utilityboard.fen()
+        # Get the notation and the FEN for the position that results from this move
+        long_algebraic_notation, move_fen, _ = get_chess_fields(complete_FEN, move_uci)
+        
+        # Get the Position Key, which will be used to generate the list of replies to this move.
+        position_key = move_row[20]
         
         # Info for what line this move is in
-        line_index = create_line_index(move_row[5], move_row[6])
+        line_parent = move_row[5]
+        subline_index = move_row[6]
+        line_index = create_line_index(line_parent, subline_index)
         
         # Update the last move index for displaying the main line
-        if line_index == '0.0' and last_move_ref.is_later(move_dict_key):
-            last_move_ref.set_index(move_dict_key)
-        
+        if line_index == '0.0' and last_move_ref.is_later(game_dict_move_key):
+            last_move_ref.set_index(game_dict_move_key)
+
         # Create the dictionary entry: first the line and then the moves for that line
         if line_index not in game_dict:
-            game_dict[line_index] = {}
-        game_dict[line_index][move_dict_key] = [long_algebraic_notation, move_fen]
+            game_dict[line_index] = {"line_ID": line_index}
+            if line_parent not in breakout_dict:
+                breakout_dict[line_parent] = {subline_index: long_algebraic_notation}
+            else:
+                breakout_dict[line_parent][subline_index] = long_algebraic_notation
+        game_dict[line_index][game_dict_move_key] = [long_algebraic_notation, move_fen, 
+                  position_key, game_move_key]
     # If we haven't updated the current move index, use the first move index
     if (current_move_ref.get_index() == cDEF_MOVE_REF_INDEX):
         current_move_ref.set_index(first_move_ref.get_index())
-    return (game_dict, first_move_ref.get_index(), last_move_ref.get_index(), current_move_ref.get_index())
+    return (game_dict, breakout_dict, first_move_ref.get_index(), last_move_ref.get_index(), 
+        current_move_ref.get_index())
 
 def get_complete_game_info(game_key: int, stem_position: int) ->tuple:
-    game_contents, first_move, last_move, current_move = get_game_moves(game_key, stem_position)
+    game_contents, breakout_dict, first_move, last_move, current_move = get_game_moves(game_key, stem_position)
     game_header, game_footer = get_game_info(game_key)
     game_meta_info = {"first_move": first_move, "last_move": last_move,
     "current_move": current_move, "game_header_text": game_header, 
-    "game_footer_text": game_footer}
-    return game_contents, game_meta_info
+    "game_footer_text": game_footer, "game_key": game_key}
+    return game_contents, breakout_dict, game_meta_info
 
 def get_opening_info(hot_node: int) -> tuple:
     chess_db = get_db().cursor()
@@ -329,8 +357,8 @@ def retrieve_opening_game_info(opening_node_key):
 def retrieve_game():
     game_key = request.args.get('game_key', cDEF_GAME_KEY, type=int)
     stem_position_key = request.args.get('stem_position_key', cDEF_POSITION_KEY, type=int)
-    game_contents, game_meta_info = get_complete_game_info(game_key, stem_position_key)
-    master_dict = {"game_contents": game_contents, 
+    game_contents, breakout_dict, game_meta_info = get_complete_game_info(game_key, stem_position_key)
+    master_dict = {"game_contents": game_contents, "breakout_dict": breakout_dict,
         "game_meta_info": game_meta_info}
     return jsonify(master_dict)
 

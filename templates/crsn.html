@@ -55,22 +55,22 @@
         <div>
           <img onclick="game_handler.go_first()"
             src="{{ url_for('static',filename='first_arrow.png') }}"
-            alt="bump back image" float="left">
+            alt="go first move" float="left">
         </div>
         <div>
           <img onclick="game_handler.bump_move(-1)"
             src="{{ url_for('static',filename='pre_arrow.png') }}"
-            alt="previous image">
+            alt="previous move">
         </div>
         <div>
           <img  onclick="game_handler.bump_move(1)"
             src="{{ url_for('static',filename='next_arrow.png') }}"
-            alt="next image">
+            alt="next move">
         </div>
         <div>
           <img onclick="game_handler.go_last()"
             src="{{ url_for('static',filename='last_arrow.png') }}"
-            alt="previous image">
+            alt="last move">
         </div>
       </div>
     </p>
@@ -159,15 +159,22 @@ var game_handler = new GameHandler;
 var openings_handler = new OpeningsHandler;
 var breadcrumbs_handler = new BreadcrumbsHandler;
 
+// Board functionality data objects
+var current_FEN = '';
+														 
 // set of board icons for opening data 
 var Board_List = [];
+
+// Flag for game mode vs quiz mode
+var display_mode;
+const cGameMode = 0;
+const cQuizMode = 1;
 
 /* ------------- End initialization routines --------------- */ 
 
 
 function load() {
   try {
-    //alert("Hello!");
     game_handler.load_game();
     openings_handler.load_openings(-1); // This also loads the opening breadcrumbs
   } 
